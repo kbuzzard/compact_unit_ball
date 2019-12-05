@@ -15,74 +15,32 @@ set_option class.instance_max_depth 100
 noncomputable theory
 open_locale classical
 
-open metric set
+open metric set submodule
 
 variables
 {V : Type} [normed_group V] [normed_space ℝ V]
 
-lemma two_positive : (2 : ℝ) > 0 :=
+-- "by X" is the same as "begin X end"
+lemma two_positive : (2 : ℝ) > 0 := by norm_num
+
+lemma half_positive : (1/2 : ℝ) > 0 := by norm_num
+
+-- move hyp and v before the colon to save on intros
+lemma ball_span_ash {A : set V} (hyp : ∀ v : V, norm v ≤ 1 → v ∈ submodule.span ℝ A) (v : V) :
+  v ∈ submodule.span ℝ A :=
 begin
-  linarith,
+  by_cases hv : v = 0,
+  { rw hv, exact zero_mem _},
+-- let's write the proof backwards.
+  rw [←one_smul ℝ v, ←@mul_inv_cancel _ _ (∥v∥) _, mul_smul],
+  { refine smul_mem _ _ (hyp _ _),
+    rw [norm_smul, real.norm_eq_abs],--, abs_of_nonneg (norm_nonneg _)],
+    rw abs_of_nonneg,
+      exact le_of_eq (inv_mul_cancel $ mt (norm_eq_zero _).1 hv),
+    exact inv_nonneg.2 (norm_nonneg _),
+    },
+  exact mt (norm_eq_zero _).1 hv,
 end
-
-lemma half_positive : (1/2 : ℝ) > 0 :=
-begin
-  simp,
-  linarith,
-end
-
-lemma ball_span_ash {A : set V} : 
-(∀ v : V, norm v ≤ 1 → v ∈ submodule.span ℝ A) 
-→ ∀ v : V, v ∈ submodule.span ℝ A :=
-
-begin
-
-intro hyp,
-intro v,
-
-cases (classical.em (v = 0)) with v0 vn0,
-rw submodule.mem_span,
-intros p hp,
-rw v0,
-exact submodule.zero_mem p,
-
-let w : V := (1/norm v) • v,
-have hwdef : w = (1/norm v) • v,
-refl,
-
-have hw2 : norm v ≠ 0,
-intro hv,
-rw norm_eq_zero at hv,
-exact vn0 hv,
-
-have hw : norm w ≤ 1, 
-
-have hw1 : norm w = 1,
-rw hwdef,
-rw norm_smul,
-rw real.norm_eq_abs,
-rw abs_of_nonneg,
-rw mul_comm,
-rw mul_one_div_cancel,
-
-have h2 := hyp w,
-
-exact hw2,
-simp,
-rw le_iff_eq_or_lt,
-left,
-exact hw1,
-
-have h3 : (1/norm v : ℝ) ≠ 0,
-rw div_eq_inv_mul,
-rw mul_one,
-exact inv_ne_zero hw2,
-
-rw <- submodule.smul_mem_iff (submodule.span ℝ A) h3,
-rw <- hwdef,
-exact hyp w hw,
-end
-
 
 lemma ball_span {A : set V} : (∀ v : V, v ∈ (closed_ball 0 1 : set V) → v ∈ submodule.span ℝ A) 
 → ∀ v : V, v ∈ submodule.span ℝ A :=
@@ -250,7 +208,7 @@ begin
   exact mem_of_is_seq_closed hseq hw hlim,
 end
 
-set_option profiler true
+--set_option profiler true
 theorem compact_unit_ball_implies_finite_dim : 
     compact (closed_ball 0 1 : set V) → vector_space.dim ℝ V < cardinal.omega :=
 begin
