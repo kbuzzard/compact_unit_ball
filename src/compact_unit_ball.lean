@@ -1,17 +1,17 @@
-import analysis.normed_space.banach
-import analysis.normed_space.basic
-import linear_algebra.basic
-import linear_algebra.basis
-import linear_algebra.dimension
-import linear_algebra.finite_dimensional
-import topology.subset_properties
-import set_theory.cardinal
-import data.real.basic
+-- don't need to import things which other files import
 import topology.sequences
-import order.bounded_lattice
-import analysis.specific_limits
 import analysis.normed_space.finite_dimension
 
+-- type class inference in Lean 3 has been pushed too far by mathematicians. 
+-- Lean 4 should fix these issues.
+local attribute [instance, priority 10000] mul_action.to_has_scalar distrib_mul_action.to_mul_action
+semimodule.to_distrib_mul_action module.to_semimodule vector_space.to_module normed_space.to_vector_space
+ring.to_monoid normed_ring.to_ring normed_field.to_normed_ring add_group.to_add_monoid
+add_comm_group.to_add_group normed_group.to_add_comm_group ring.to_semiring add_comm_group.to_add_comm_monoid
+normed_field.to_discrete_field
+
+-- see above.
+set_option class.instance_max_depth 100
 noncomputable theory
 open_locale classical
 
@@ -250,6 +250,7 @@ begin
   exact mem_of_is_seq_closed hseq hw hlim,
 end
 
+set_option profiler true
 theorem compact_unit_ball_implies_finite_dim : 
     compact (closed_ball 0 1 : set V) → vector_space.dim ℝ V < cardinal.omega :=
 begin
